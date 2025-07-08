@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon-192.png">
+  <meta name="theme-color" content="#27ae60">
+  <title>Station Queue Display</title>
+  <style>
+    body { font-family: sans-serif; background: #222; color: #fff; text-align: center; }
+    .counter { display: inline-block; margin: 2rem; }
+    .counter h2 { font-size: 3rem; }
+    .counter .token { font-size: 5rem; margin-top: .5rem; }
+  </style>
+</head>
+<body>
+  <h1>Now Serving</h1>
+  <div id="counters"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const cnt = document.getElementById('counters');
+    const socket = io();
+    socket.on('update', data => {
+      cnt.innerHTML = '';
+      for (const [id, tok] of Object.entries(data.counters)) {
+        cnt.innerHTML += `
+          <div class="counter">
+            <h2>Counter ${id}</h2>
+            <div class="token">${tok||'—'}</div>
+          </div>`;
+      }
+    });
+  </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log("Service Worker Registered!", reg))
+      .catch(err => console.error("SW registration failed", err));
+  }
+</script>
+
+</body>
+</html>

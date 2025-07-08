@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Counter Staff Panel - DayStar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#27ae60">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f2fdfb, #ffffff);
+      margin: 0;
+      padding: 1rem;
+      color: #2c3e50;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-top: 1rem;
+      color: #00695c;
+    }
+
+    .login-box, .main-panel {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 1.2rem;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+    }
+
+    h3 {
+      margin-bottom: 1rem;
+      color: #004d40;
+      text-align: center;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    select, button, input {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      border: 1px solid #b2dfdb;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #00796b;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border: none;
+    }
+
+    button:hover {
+      background: #004d40;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    th {
+      background: #e0f2f1;
+      font-weight: bold;
+      color: #004d40;
+    }
+
+    td {
+      background: #ffffff;
+    }
+
+    button.serve {
+      background: #26a69a;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #statusMsg {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      color: #00695c;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>DayStar Queue - Counter Panel</h1>
+
+  <div class="login-box" id="loginBox">
+    <h3>काउंटर लॉगिन / Counter Login</h3>
+    <label for="counterId">काउंटर नंबर / Counter Number:</label>
+    <select id="counterId">
+      <option value="1">Counter 1</option>
+      <option value="2">Counter 2</option>
+      <option value="3">Counter 3</option>
+    </select>
+    <button onclick="startSession()">लॉगिन करें / Start</button>
+  </div>
+
+  <div class="main-panel hidden" id="panelBox">
+    <h3>लाइव कतार / Live Queue</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Name</th>
+          <th>Mobile</th>
+          <th>Serve</th>
+        </tr>
+      </thead>
+      <tbody id="queueList"></tbody>
+    </table>
+    <p id="statusMsg"></p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let counterId = null;
+    const list = document.getElementById('queueList');
+    const socket = io();
+
+    function startSession() {
+      counterId = document.getElementById('counterId').value;
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('panelBox').classList.remove('hidden');
+      loadQueue();
+    }
+
+    async function loadQueue() {
+      const res = await fetch('/api/pending');
+      const tokens = await res.json();
+      list.innerHTML = '';
+      tokens.forEach(t => {
+        list.innerHTML += `
+          <tr>
+            <td>${t.tokenNumber}</td>
+            <td>${t.userName || '-'}</td>
+            <td>${t.mobile || '-'}</td>
+            <td><button class="serve" onclick="serveToken(${t.tokenNumber})">Serve</button></td>
+          </tr>`;
+      });
+    }
+
+    async function serveToken(token) {
+      const res = await fetch('/api/serve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ counterId, token })
+      });
+      if (res.ok) {
+        document.getElementById('statusMsg').textContent = `Now Serving Token ${token} at Counter ${counterId}`;
+        loadQueue();
+      }
+    }
+
+    socket.on('update', loadQueue);
+    socket.on('expire', loadQueue);
+  </script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DayStar Queue Kiosk - Powered by RL AI</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon-192.png">
+  <meta name="theme-color" content="#27ae60">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      text-align: left;
+      margin-top: 1.2rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e8449;
+    }
+    #result {
+      margin-top: 2rem;
+      font-size: 1.3rem;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>अपना टोकन प्राप्त करें<br/>Get Your Queue Token</h1>
+
+    <label for="name">नाम / Name</label>
+    <input type="text" id="name" placeholder="अपना नाम दर्ज करें / Enter your name" required>
+
+    <label for="mobile">मोबाइल नंबर / Mobile Number</label>
+    <input type="tel" id="mobile" placeholder="10-digit mobile number">
+
+    <button id="getTokenBtn">टोकन प्राप्त करें / Get Token</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    document.getElementById('getTokenBtn').onclick = async () => {
+      const name = document.getElementById('name').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+
+    if (!name) {
+    alert("कृपया सही नाम दर्ज करें।\nPlease enter a valid name.");
+    return;
+    }
+
+    //if (!mobile.match(/^[6-9]\d{9}$/)) {
+    //alert("कृपया 6, 7, 8 या 9 से शुरू होने वाला 10-अंकों का मोबाइल नंबर दर्ज करें।\nPlease enter a 10-digit mobile number starting from 6, 7, 8 or 9.");
+    //return;
+   //}
+
+
+
+      const res = await fetch('/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mobile })
+      });
+
+      const data = await res.json();
+      if (data.token) {
+        document.getElementById('result').innerHTML = `
+          <strong>धन्यवाद ${name}!</strong><br/>
+          आपका टोकन नंबर है: <span style="font-size:2rem; color:#27ae60;">${data.token}</span><br/>
+          कृपया स्क्रीन पर नंबर आने की प्रतीक्षा करें।<br/>
+          Thank you! Your token is generated. Please wait for your number to be called.
+        `;
+        document.getElementById('name').value = '';
+        document.getElementById('mobile').value = '';
+      }
+    };
+  </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log("Service Worker Registered!", reg))
+      .catch(err => console.error("SW registration failed", err));
+  }
+</script>
+
+</body>
+</html>
